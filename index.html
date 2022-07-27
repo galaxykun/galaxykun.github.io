@@ -88,18 +88,16 @@
             Array.from(cells).forEach((element, index) => {
                cells[index].style.cursor = "pointer";
                cells[index].innerText = player.name;
-               
+
                cells[index].setAttribute("id", index);
                cells[index].addEventListener('mouseover', mouseover_func);
             });
 
             time = setInterval(() => {
                if(player.time <= 0){
-                  alert((player.name == 'O' ? 'X' : player.name) + ' is WIN!!');
-
-                  clearInterval(time);
-
                   endgame();
+
+                  alert((player.name == 'O' ? 'X' : player.name) + ' is WIN!!');
 
                   return;
                }
@@ -109,25 +107,24 @@
             }, 100);
          });
          
-         function mouseover_func(index) {
-            index.target.style.color='black';
-            index.target.addEventListener('mouseout', mouseout_func);
-            index.target.addEventListener('click', click_func);
+         //不知道要取甚麼變數(cell)
+         function mouseover_func(cell) {
+            cell.target.style.color='black';
+            cell.target.addEventListener('mouseout', mouseout_func);
+            cell.target.addEventListener('click', click_func);
          }
 
-         function mouseout_func(index) {
-            if(index != undefined){
-               index.target.style.color='transparent';
-            }
+         function mouseout_func(cell) {
+            cell.target.style.color='transparent';
          }
 
-         function click_func(index){
-            index.target.removeEventListener('click', click_func);
-            index.target.removeEventListener('mouseout', mouseout_func);
-            index.target.removeEventListener('mouseover', mouseover_func);
+         function click_func(cell) {
+            cell.target.removeEventListener('click', click_func);
+            cell.target.removeEventListener('mouseout', mouseout_func);
+            cell.target.removeEventListener('mouseover', mouseover_func);
             
             currentstep++;
-            player.iswin |= (1 << +(index.target.id));
+            player.iswin |= (1 << +(cell.target.id));
 
             if(check() == true){
                endgame();
@@ -159,21 +156,15 @@
          //data reset
          function endgame() {
             clearInterval(time);
-            player = player_O;
-
-            player_O.iswin = 0;
-            player_O.time = 60000;
-
-            player_X.iswin = 0;
-            player_X.time = 60000;
-            
-            currentstep = 0;
 
             Array.from(cells).forEach((element, index) => {
+               if((((player_O.iswin | player_X.iswin) >> index) & 1) == 0){
+                  cells[index].innerText = "";
+                  cells[index].removeEventListener('click', click_func);
+                  cells[index].removeEventListener('mouseout', mouseout_func);
+                  cells[index].removeEventListener('mouseover', mouseover_func);
+               }
                cells[index].style.cursor = "default";
-               cells[index].removeEventListener('click', click_func);
-               cells[index].removeEventListener('mouseout', mouseout_func);
-               cells[index].removeEventListener('mouseover', mouseover_func);
             });
          }
 
@@ -207,6 +198,16 @@
 
             player_X.time_id.innerText = '60.0';
             player_O.time_id.innerText = '60.0';
+
+            player = player_O;
+
+            player_O.iswin = 0;
+            player_O.time = 60000;
+
+            player_X.iswin = 0;
+            player_X.time = 60000;
+
+            currentstep = 0;
          }
       </script>
    </body>
