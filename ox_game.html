@@ -1,0 +1,218 @@
+<!DOCTPYE html>
+<html>
+   <head>
+      <meta charset="UTF-8">
+      <style>
+         * {
+            margin: 1em;
+            user-select: none;
+         }
+         #start {
+            cursor : pointer;
+         }
+         .table {
+            display: table;
+            border-collapse: collapse;
+         }
+         .row {
+            display: table-row;
+         }
+         .cell, .cell_check {
+            cursor: "default";
+            display: table-cell;
+            width: 50px;
+            height: 50px;
+            border: 1px solid rgb(0, 0, 0);
+            text-align : center;
+            vertical-align: middle;
+            color: transparent;
+         }
+      </style>
+   </head>
+   <body>
+      <button id = "start" type = "button"> 開始 </button>
+      <button id = "reset" disabled = "disabled" type = "button"> 重置 </button>
+      <div class = "table">
+         <div class = "row">
+            <div class = "cell"></div>
+            <div class = "cell"></div>
+            <div class = "cell"></div>
+         </div>
+         <div class = "row">
+            <div class = "cell"></div>
+            <div class = "cell"></div>
+            <div class = "cell"></div>
+         </div>
+         <div class = "row">
+            <div class = "cell"></div>
+            <div class = "cell"></div>
+            <div class = "cell"></div>
+         </div>
+      </div>
+      <div>
+         當前玩家 : <span id = "curr_pleayer"></span>
+      </div>
+      <div class = "player">O : <span id = "time_O">60.0</span></div>
+      <div class = "player">X : <span id = "time_X">60.0</span></div>
+      
+      <script>
+         const start = document.getElementById('start');
+         const reset = document.getElementById('reset');
+         const curr_pleayer = document.getElementById('curr_pleayer');
+         let cells = document.getElementsByClassName('cell');
+
+         let record = [false, false, false, false, false, false, false, false, false, false];
+         let currentstep = 0;
+         let time;
+
+         let player_O = {
+            name : 'O',
+            iswin : 0,
+            time : 60000,
+            time_id : document.getElementById('time_O')
+         }
+
+         let player_X = {
+            name : 'X',
+            iswin : 0,
+            time : 60000,
+            time_id : document.getElementById('time_X')
+         }
+
+         let player = player_O;
+
+         let win_array = [7, 73, 273, 146, 84, 292, 56, 448];
+         
+         start.addEventListener('click', () => {
+            start.disabled = "disabled";
+            start.style.cursor = "default";
+
+            reset.disabled = "";
+            reset.style.cursor = "pointer";
+
+            record.forEach((value, index) => {
+               record[index] = true;
+            });
+
+            curr_pleayer.innerText = player.name;
+            curr_pleayer.style.color = 'black';
+
+            time = setInterval(() => {
+               if(player.time <= 0){
+                  check();
+               }
+
+               player.time = player.time <= 100 ? 0 : player.time - 100;
+               player.time_id.innerText = String((player.time / 1000).toFixed(1));
+            }, 100);
+
+            Array.from(cells).forEach((element, index) => {
+               cells[index].style.cursor = "pointer";
+               cells[index].innerText = player.name;
+
+               cells[index].addEventListener('click', () => {
+                  if(record[index] == true){
+                     cells[index].innerText = player.name;
+                     cells[index].style.color = 'black';
+                     
+                     record[index] = false;
+                     currentstep++;
+
+                     player.iswin |= (1 << index);
+                     if(check() == true){
+                        endgame();
+                        return;
+                     }
+                     
+                     player = (player.name == 'O') ? player_X : player_O;
+
+                     curr_pleayer.innerText = player.name;
+
+                     Array.from(cells).forEach((element, index) =>{
+                        if(record[index] == true)
+                        cells[index].innerText = player.name;
+                     });
+                  }
+               }, {once:true})
+
+               cells[index].addEventListener('mouseover', function() {
+                  if(record[index] == true)
+                     cells[index].style.color='black';
+               }, );
+
+               cells[index].addEventListener('mouseout', function() {
+                  if(record[index] == true)
+                     cells[index].style.color='transparent';
+               });
+            });
+         });
+
+         reset.addEventListener('click', () => {
+            endgame();
+            start.disabled = "";
+            start.style.cursor = "pointer";
+
+            reset.disabled = "disabled";
+            reset.style.cursor = "default";
+
+            Array.from(cells).forEach((element, index) => {
+               cells[index].style.color='transparent';
+               cells[index].innerHTML = "";
+            });
+
+            curr_pleayer.innerText = "";
+            curr_pleayer.style.color = 'transparent';
+
+            player_X.time_id.innerText = '60.0';
+            player_O.time_id.innerText = '60.0';
+            
+         });
+
+         function endgame() {
+            clearInterval(time);
+            player = player_O;
+
+            player_O.iswin = 0;
+            player_O.time = 60000;
+
+            player_X.iswin = 0;
+            player_X.time = 60000;
+            currentstep = 0;
+
+            record.forEach((value, index) => {
+               record[index] = false;
+            });
+
+            Array.from(cells).forEach((element, index) => {
+               cells[index].style.cursor = "default";
+            });
+         }
+
+         function check() {
+            for(let i = 0; i < win_array.length; i++){
+               if((player.iswin & win_array[i]) == win_array[i]){
+                  alert(player.name + ' is WIN!!');
+
+                  return true;
+               }
+            }
+
+            if(currentstep == 9){
+               alert('平手');
+
+               return true;
+            }
+
+            if(player.time <= 0){
+               alert((player.name == 'O' ? 'X' : player.name) + ' is WIN!!');
+
+               clearInterval(time);
+
+               return true;
+            }
+
+            return false;
+         }
+      </script>
+   </body>
+</html>
