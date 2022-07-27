@@ -18,7 +18,6 @@
             display: table-row;
          }
          .cell, .cell_check {
-            cursor: "default";
             display: table-cell;
             width: 50px;
             height: 50px;
@@ -61,7 +60,6 @@
          const curr_pleayer = document.getElementById('curr_pleayer');
          let cells = document.getElementsByClassName('cell');
 
-         let record = [false, false, false, false, false, false, false, false, false, false];
          let currentstep = 0;
          let time;
 
@@ -83,91 +81,82 @@
 
          let win_array = [7, 73, 273, 146, 84, 292, 56, 448];
          
+         //game start initiaize and event listerner
          start.addEventListener('click', () => {
-            start.disabled = "disabled";
-            start.style.cursor = "default";
-
-            reset.disabled = "";
-            reset.style.cursor = "pointer";
-
-            record.forEach((value, index) => {
-               record[index] = true;
+            settext(true);
+            
+            Array.from(cells).forEach((element, index) => {
+               cells[index].style.cursor = "pointer";
+               cells[index].innerText = player.name;
+               
+               cells[index].setAttribute("id", index);
+               cells[index].addEventListener('mouseover', mouseover_func);
             });
-
-            curr_pleayer.innerText = player.name;
-            curr_pleayer.style.color = 'black';
 
             time = setInterval(() => {
                if(player.time <= 0){
-                  check();
+                  alert((player.name == 'O' ? 'X' : player.name) + ' is WIN!!');
+
+                  clearInterval(time);
+
+                  endgame();
+
+                  return;
                }
 
                player.time = player.time <= 100 ? 0 : player.time - 100;
                player.time_id.innerText = String((player.time / 1000).toFixed(1));
             }, 100);
-
-            Array.from(cells).forEach((element, index) => {
-               cells[index].style.cursor = "pointer";
-               cells[index].innerText = player.name;
-
-               cells[index].addEventListener('click', () => {
-                  if(record[index] == true){
-                     cells[index].innerText = player.name;
-                     cells[index].style.color = 'black';
-                     
-                     record[index] = false;
-                     currentstep++;
-
-                     player.iswin |= (1 << index);
-                     if(check() == true){
-                        endgame();
-                        return;
-                     }
-                     
-                     player = (player.name == 'O') ? player_X : player_O;
-
-                     curr_pleayer.innerText = player.name;
-
-                     Array.from(cells).forEach((element, index) =>{
-                        if(record[index] == true)
-                        cells[index].innerText = player.name;
-                     });
-                  }
-               }, {once:true})
-
-               cells[index].addEventListener('mouseover', function() {
-                  if(record[index] == true)
-                     cells[index].style.color='black';
-               }, );
-
-               cells[index].addEventListener('mouseout', function() {
-                  if(record[index] == true)
-                     cells[index].style.color='transparent';
-               });
-            });
          });
+         
+         function mouseover_func(index) {
+            index.target.style.color='black';
+            index.target.addEventListener('mouseout', mouseout_func);
+            index.target.addEventListener('click', click_func);
+         }
 
+         function mouseout_func(index) {
+            if(index != undefined){
+               index.target.style.color='transparent';
+            }
+         }
+
+         function click_func(index){
+            index.target.removeEventListener('click', click_func);
+            index.target.removeEventListener('mouseout', mouseout_func);
+            index.target.removeEventListener('mouseover', mouseover_func);
+            
+            currentstep++;
+            player.iswin |= (1 << +(index.target.id));
+
+            if(check() == true){
+               endgame();
+
+               return;
+            }
+            
+            player = (player.name == 'O') ? player_X : player_O;
+            curr_pleayer.innerText = player.name;
+
+            Array.from(cells).forEach((element, index) =>{
+               if(cells[index].style.color != 'black')
+                  cells[index].innerText = player.name;
+            });
+         }
+
+         //reset
          reset.addEventListener('click', () => {
             endgame();
-            start.disabled = "";
-            start.style.cursor = "pointer";
 
-            reset.disabled = "disabled";
-            reset.style.cursor = "default";
+            settext(false);
 
             Array.from(cells).forEach((element, index) => {
-               cells[index].style.color='transparent';
                cells[index].innerHTML = "";
+               cells[index].style.color = "";
             });
-
-            curr_pleayer.innerText = "";
-            curr_pleayer.style.color = 'transparent';
-
-            player_X.time_id.innerText = '60.0';
-            player_O.time_id.innerText = '60.0';
-            
          });
 
+         //data reset
          function endgame() {
             clearInterval(time);
             player = player_O;
@@ -177,14 +166,14 @@
 
             player_X.iswin = 0;
             player_X.time = 60000;
+            
             currentstep = 0;
-
-            record.forEach((value, index) => {
-               record[index] = false;
-            });
 
             Array.from(cells).forEach((element, index) => {
                cells[index].style.cursor = "default";
+               cells[index].removeEventListener('click', click_func);
+               cells[index].removeEventListener('mouseout', mouseout_func);
+               cells[index].removeEventListener('mouseover', mouseover_func);
             });
          }
 
@@ -203,15 +192,21 @@
                return true;
             }
 
-            if(player.time <= 0){
-               alert((player.name == 'O' ? 'X' : player.name) + ' is WIN!!');
-
-               clearInterval(time);
-
-               return true;
-            }
-
             return false;
+         }
+
+         function settext(compare) {
+            start.disabled = compare ? "disabled" : "";
+            start.style.cursor = compare ? "default" : "pointer";
+
+            reset.disabled = compare ? "" : "disabled";
+            reset.style.cursor = compare ? "pointer" : "";
+
+            curr_pleayer.innerText = compare ? player.name : "";
+            curr_pleayer.style.color = compare ? 'black' : 'transparent';
+
+            player_X.time_id.innerText = '60.0';
+            player_O.time_id.innerText = '60.0';
          }
       </script>
    </body>
