@@ -130,6 +130,7 @@
          }
 
          function animation() {
+            const now = Date.now()
             if(player.time <= 0){
                endgame();
 
@@ -137,12 +138,11 @@
 
                return;
             }
-
-            const now = Date.now()
+            
             timecheckpoint = timecheckpoint == null ? now : timecheckpoint;
 
             if(now - timecheckpoint >= 100){
-               player.time = player.time <= 100 ? 0 : player.time - 100;
+               player.time = player.time - (now - timecheckpoint);
                player.time_id.innerText = String((player.time / 1000).toFixed(1));
                timecheckpoint = now;
             }
@@ -167,6 +167,7 @@
             rootElement.dataset.show = false;
 
             table.removeEventListener('click', click_func);
+            cancelAnimationFrame(requestID);
          }
 
          function check() {
@@ -201,6 +202,7 @@
             player_X.time = 60000;
 
             currentstep = 0;
+            timecheckpoint = null;
          }
       </script>
    </body>
