@@ -67,21 +67,22 @@
          rootElement.dataset.show = false;
          
          let currentstep = 0;
-         let timecheckpoint = null;
          let requestID;
 
          let player_O = {
             name : 'O',
             iswin : 0,
             time : 60000,
-            time_id : document.getElementById('time_O')
+            time_id : document.getElementById('time_O'),
+            time_pre: null
          }
 
          let player_X = {
             name : 'X',
             iswin : 0,
             time : 60000,
-            time_id : document.getElementById('time_X')
+            time_id : document.getElementById('time_X'),
+            time_pre: null
          }
 
          let player     = player_O;
@@ -109,9 +110,10 @@
             rootElement.dataset.show = true;         
             rootElement.style.setProperty(`--celltext`, `"${player.name}"`);
 
+            player.time_pre = Date.now();
             requestAnimationFrame(animation);
          });
-         
+
          //不知道要取甚麼變數(cell)
          function click_func(cell) {
             if(cell.target.className != "cell"){
@@ -130,10 +132,11 @@
             
             player = (player.name == 'O') ? player_X : player_O;
             rootElement.style.setProperty(`--celltext`, `"${player.name}"`);
+            player.time_pre = Date.now();
          }
 
          function animation() {
-            const now = Date.now()
+            const now = Date.now();
             if(player.time <= 0){
                endgame();
 
@@ -142,14 +145,10 @@
                return;
             }
             
-            timecheckpoint = timecheckpoint == null ? now : timecheckpoint;
-
-            if(now - timecheckpoint >= 100){
-               player.time = player.time - (now - timecheckpoint);
-               player.time = player.time <= 0 ? 0 : player.time;
-               player.time_id.innerText = String((player.time / 1000).toFixed(1));
-               timecheckpoint = now;
-            }
+            player.time = player.time - (now - player.time_pre);
+            player.time = player.time <= 0 ? 0 : player.time;
+            player.time_id.innerText = String((player.time / 1000).toFixed(1));
+            player.time_pre = now;
 
             requestID = requestAnimationFrame(animation);
          }
@@ -206,7 +205,6 @@
             player_X.time = 60000;
 
             currentstep = 0;
-            timecheckpoint = null;
          }
       </script>
    </body>
