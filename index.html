@@ -1,5 +1,5 @@
 <!DOCTPYE html>
-<html lang = "zh-Hant" data-show = "false">
+<html lang = "zh-Hant">
    <head>
       <meta charset="UTF-8">
       <style>
@@ -15,7 +15,7 @@
          button:enabled {
             cursor: pointer;
          }
-         .table {
+         #table {
             display: table;
             border-collapse: collapse;
          }
@@ -44,30 +44,12 @@
          [data-player = 'X']::before {
             content: var(--player_X);
          }
-        
-         
       </style>
    </head>
    <body>
       <button id = "start" type = "button"> 開始 </button>
       <button id = "reset" disabled = "disabled" type = "button"> 重置 </button>
-      <div class = "table">
-         <div class = "row">
-            <div class = "cell" data-player = '0'></div>
-            <div class = "cell" data-player = '0'></div>
-            <div class = "cell" data-player = '0'></div>
-         </div>
-         <div class = "row">
-            <div class = "cell" data-player = '0'></div>
-            <div class = "cell" data-player = '0'></div>
-            <div class = "cell" data-player = '0'></div>
-         </div>
-         <div class = "row">
-            <div class = "cell" data-player = '0'></div>
-            <div class = "cell" data-player = '0'></div>
-            <div class = "cell" data-player = '0'></div>
-         </div>
-      </div>
+      <div id = "table"></div>
       <div>
          當前玩家 : <span id = "curr_player"></span>
       </div>
@@ -75,14 +57,17 @@
       <div class = "player">X : <span id = "time_X">60.0</span></div>
       
       <script>
-         const start = document.getElementById('start');
-         const reset = document.getElementById('reset');
-         const curr_pleayer = document.getElementById('curr_pleayer');
-         const rootElement = document.documentElement;
-         let cells = document.getElementsByClassName('cell');
+         const start          = document.getElementById('start');
+         const reset          = document.getElementById('reset');
+         const table          = document.getElementById('table');
+         const curr_pleayer   = document.getElementById('curr_pleayer');
 
+         const rootElement = document.documentElement;
+         rootElement.dataset.show = false;
+         
          let currentstep = 0;
-         let time;
+         let timecheckpoint = null;
+         let requestID;
 
          let player_O = {
             name : 'O',
@@ -98,35 +83,32 @@
             time_id : document.getElementById('time_X')
          }
 
-         let player = player_O;
+         let player     = player_O;
+         let win_array  = [7, 73, 273, 146, 84, 292, 56, 448];
 
-         let win_array = [7, 73, 273, 146, 84, 292, 56, 448];
+         for(let i = 0; i < 3; i++){
+            let row = document.createElement("div");
+            row.className = "row";
+            table.appendChild(row);
+
+            for(let j = 0; j < 3; j++){
+               let cell = document.createElement("div");
+               cell.className = "cell";
+               cell.setAttribute("id", i * 3 + j);
+               cell.dataset.player = "0";
+               row.appendChild(cell);
+            }
+         }
          
          //game start initiaize and event listerner
          start.addEventListener('click', () => {
+            table.addEventListener('click', click_func);
             settext(true);
 
-            rootElement.dataset.show = true;
-            
-            Array.from(cells).forEach((element, index) => {
-               cells[index].setAttribute("id", index);
-               cells[index].addEventListener('click', click_func);
-            });
-
+            rootElement.dataset.show = true;         
             rootElement.style.setProperty(`--celltext`, `"${player.name}"`);
 
-            time = setInterval(() => {
-               if(player.time <= 0){
-                  endgame();
-
-                  alert((player.name == 'O' ? 'X' : player.name) + ' is WIN!!');
-
-                  return;
-               }
-
-               player.time = player.time <= 100 ? 0 : player.time - 100;
-               player.time_id.innerText = String((player.time / 1000).toFixed(1));
-            }, 100);
+            requestAnimationFrame(animation);
          });
          
          //不知道要取甚麼變數(cell)
@@ -135,7 +117,7 @@
 
             cell.target.dataset.player = player.name
             currentstep++;
-            player.iswin |= (1 << +(cell.target.id));
+            player.iswin |= (1 << cell.target.id);
 
             if(check() == true){
                endgame();
@@ -143,35 +125,48 @@
                return;
             }
             
-            
             player = (player.name == 'O') ? player_X : player_O;
             rootElement.style.setProperty(`--celltext`, `"${player.name}"`);
+         }
+
+         function animation() {
+            if(player.time <= 0){
+               endgame();
+
+               alert((player.name == 'O' ? 'X' : player.name) + ' is WIN!!');
+
+               return;
+            }
+
+            const now = Date.now()
+            timecheckpoint = timecheckpoint == null ? now : timecheckpoint;
+
+            if(now - timecheckpoint >= 100){
+               player.time = player.time <= 100 ? 0 : player.time - 100;
+               player.time_id.innerText = String((player.time / 1000).toFixed(1));
+               timecheckpoint = now;
+            }
+
+            requestID = requestAnimationFrame(animation);
          }
 
          //reset
          reset.addEventListener('click', () => {
             endgame();
-
             settext(false);
 
             rootElement.style.setProperty(`--celltext`, `""`);
 
-            Array.from(cells).forEach((element, index) => {
-               cells[index].dataset.player = '0';
-            });
+            for(let element of document.getElementsByClassName('cell')){
+               element.dataset.player = '0';
+            }
          });
 
          //data reset
          function endgame() {
-            clearInterval(time);
-
             rootElement.dataset.show = false;
 
-            Array.from(cells).forEach((element, index) => {
-               if((((player_O.iswin | player_X.iswin) >> index) & 1) == 0){
-                  cells[index].removeEventListener('click', click_func);
-               }
-            });
+            table.removeEventListener('click', click_func);
          }
 
          function check() {
