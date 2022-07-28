@@ -1,14 +1,19 @@
 <!DOCTPYE html>
-<html>
+<html lang = "zh-Hant" data-show = "false">
    <head>
       <meta charset="UTF-8">
       <style>
+         :root{
+            --celltext: "";
+            --player_O: 'O';
+            --player_X: 'X';
+         }
          * {
             margin: 1em;
             user-select: none;
          }
-         #start {
-            cursor : pointer;
+         button:enabled {
+            cursor: pointer;
          }
          .table {
             display: table;
@@ -17,15 +22,30 @@
          .row {
             display: table-row;
          }
-         .cell, .cell_check {
+         .cell {
+            pointer-events: none;
             display: table-cell;
             width: 50px;
             height: 50px;
             border: 1px solid rgb(0, 0, 0);
             text-align : center;
             vertical-align: middle;
-            color: transparent;
          }
+         :root[data-show = 'true'] [data-player = '0']{
+            pointer-events: auto;
+            cursor: pointer;
+         }
+         :is([data-player = '0']:hover, #curr_player)::before {
+            content: var(--celltext);
+         }
+         [data-player = 'O']::before {
+            content: var(--player_O);
+         }
+         [data-player = 'X']::before {
+            content: var(--player_X);
+         }
+        
+         
       </style>
    </head>
    <body>
@@ -33,23 +53,23 @@
       <button id = "reset" disabled = "disabled" type = "button"> 重置 </button>
       <div class = "table">
          <div class = "row">
-            <div class = "cell"></div>
-            <div class = "cell"></div>
-            <div class = "cell"></div>
+            <div class = "cell" data-player = '0'></div>
+            <div class = "cell" data-player = '0'></div>
+            <div class = "cell" data-player = '0'></div>
          </div>
          <div class = "row">
-            <div class = "cell"></div>
-            <div class = "cell"></div>
-            <div class = "cell"></div>
+            <div class = "cell" data-player = '0'></div>
+            <div class = "cell" data-player = '0'></div>
+            <div class = "cell" data-player = '0'></div>
          </div>
          <div class = "row">
-            <div class = "cell"></div>
-            <div class = "cell"></div>
-            <div class = "cell"></div>
+            <div class = "cell" data-player = '0'></div>
+            <div class = "cell" data-player = '0'></div>
+            <div class = "cell" data-player = '0'></div>
          </div>
       </div>
       <div>
-         當前玩家 : <span id = "curr_pleayer"></span>
+         當前玩家 : <span id = "curr_player"></span>
       </div>
       <div class = "player">O : <span id = "time_O">60.0</span></div>
       <div class = "player">X : <span id = "time_X">60.0</span></div>
@@ -58,6 +78,7 @@
          const start = document.getElementById('start');
          const reset = document.getElementById('reset');
          const curr_pleayer = document.getElementById('curr_pleayer');
+         const rootElement = document.documentElement;
          let cells = document.getElementsByClassName('cell');
 
          let currentstep = 0;
@@ -84,14 +105,15 @@
          //game start initiaize and event listerner
          start.addEventListener('click', () => {
             settext(true);
+
+            rootElement.dataset.show = true;
             
             Array.from(cells).forEach((element, index) => {
-               cells[index].style.cursor = "pointer";
-               cells[index].innerText = player.name;
-
                cells[index].setAttribute("id", index);
-               cells[index].addEventListener('mouseover', mouseover_func);
+               cells[index].addEventListener('click', click_func);
             });
+
+            rootElement.style.setProperty(`--celltext`, `"${player.name}"`);
 
             time = setInterval(() => {
                if(player.time <= 0){
@@ -108,21 +130,10 @@
          });
          
          //不知道要取甚麼變數(cell)
-         function mouseover_func(cell) {
-            cell.target.style.color='black';
-            cell.target.addEventListener('mouseout', mouseout_func);
-            cell.target.addEventListener('click', click_func);
-         }
-
-         function mouseout_func(cell) {
-            cell.target.style.color='transparent';
-         }
-
          function click_func(cell) {
             cell.target.removeEventListener('click', click_func);
-            cell.target.removeEventListener('mouseout', mouseout_func);
-            cell.target.removeEventListener('mouseover', mouseover_func);
-            
+
+            cell.target.dataset.player = player.name
             currentstep++;
             player.iswin |= (1 << +(cell.target.id));
 
@@ -132,13 +143,9 @@
                return;
             }
             
+            
             player = (player.name == 'O') ? player_X : player_O;
-            curr_pleayer.innerText = player.name;
-
-            Array.from(cells).forEach((element, index) =>{
-               if(cells[index].style.color != 'black')
-                  cells[index].innerText = player.name;
-            });
+            rootElement.style.setProperty(`--celltext`, `"${player.name}"`);
          }
 
          //reset
@@ -147,9 +154,10 @@
 
             settext(false);
 
+            rootElement.style.setProperty(`--celltext`, `""`);
+
             Array.from(cells).forEach((element, index) => {
-               cells[index].innerHTML = "";
-               cells[index].style.color = "";
+               cells[index].dataset.player = '0';
             });
          });
 
@@ -157,24 +165,20 @@
          function endgame() {
             clearInterval(time);
 
+            rootElement.dataset.show = false;
+
             Array.from(cells).forEach((element, index) => {
                if((((player_O.iswin | player_X.iswin) >> index) & 1) == 0){
-                  cells[index].innerText = "";
                   cells[index].removeEventListener('click', click_func);
-                  cells[index].removeEventListener('mouseout', mouseout_func);
-                  cells[index].removeEventListener('mouseover', mouseover_func);
                }
-               cells[index].style.cursor = "default";
             });
          }
 
          function check() {
-            for(let i = 0; i < win_array.length; i++){
-               if((player.iswin & win_array[i]) == win_array[i]){
-                  alert(player.name + ' is WIN!!');
+            if(win_array.some(value => (player.iswin & value) == value)){
+               alert(player.name + ' is WIN!!');
 
-                  return true;
-               }
+               return true;
             }
 
             if(currentstep == 9){
@@ -188,13 +192,7 @@
 
          function settext(compare) {
             start.disabled = compare ? "disabled" : "";
-            start.style.cursor = compare ? "default" : "pointer";
-
             reset.disabled = compare ? "" : "disabled";
-            reset.style.cursor = compare ? "pointer" : "";
-
-            curr_pleayer.innerText = compare ? player.name : "";
-            curr_pleayer.style.color = compare ? 'black' : 'transparent';
 
             player_X.time_id.innerText = '60.0';
             player_O.time_id.innerText = '60.0';
