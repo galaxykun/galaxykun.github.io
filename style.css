@@ -3,21 +3,26 @@
    --player_O: 'O';
    --player_X: 'X';
 }
+
 * {
    margin: 1em;
    user-select: none;
 }
+
 button:enabled {
    cursor: pointer;
 }
+
 #table {
    display: table;
    border-collapse: collapse;
 }
+
 .row {
    pointer-events: none;
    display: table-row;
 }
+
 .cell {
    pointer-events: none;
    display: table-cell;
@@ -27,16 +32,20 @@ button:enabled {
    text-align : center;
    vertical-align: middle;
 }
+
 :root[data-show='true'] [data-player='0']{
    pointer-events: auto;
    cursor: pointer;
 }
+
 :is([data-player='0']:hover, #curr_player)::before {
    content: var(--celltext);
 }
+
 [data-player='O']::before {
    content: var(--player_O);
 }
+
 [data-player='X']::before {
    content: var(--player_X);
 }

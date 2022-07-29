@@ -56,15 +56,15 @@ start.addEventListener('click', () => {
    requestAnimationFrame(animation);
 });
 
-function click_func(classList) {
-   if(classList.target.className != "cell"){
+function click_func(cell) {
+   if(!cell.target.classList.contains("cell")){
       return;
    }
 
    cancelAnimationFrame(requestID);
-   classList.target.dataset.player = player.name
+   cell.target.dataset.player = player.name
    currentstep++;
-   player.iswin |= (1 << classList.target.index);
+   player.iswin |= (1 << cell.target.index);
 
    if(check() == true){
       endgame();
