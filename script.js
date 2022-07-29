@@ -1,7 +1,9 @@
-const start          = document.getElementById('start');
-const reset          = document.getElementById('reset');
-const table          = document.getElementById('table');
-const curr_pleayer   = document.getElementById('curr_pleayer');
+const ROW_NUM  = 3;
+const CELL_NUM = 3;
+
+const start = document.getElementById('start');
+const reset = document.getElementById('reset');
+const table = document.getElementById('table');
 
 const rootElement = document.documentElement;
 rootElement.dataset.show = false;
@@ -28,15 +30,15 @@ let player_X = {
 let player     = player_O;
 let win_array  = [7, 73, 273, 146, 84, 292, 56, 448];
 
-for(let i = 0; i < 3; i++){
+for(let row_count = 0; row_count < ROW_NUM; row_count++){
    let row = document.createElement("div");
    row.className = "row";
    table.appendChild(row);
 
-   for(let j = 0; j < 3; j++){
+   for(let cell_count = 0; cell_count < CELL_NUM; cell_count++){
       let cell = document.createElement("div");
       cell.className = "cell";
-      cell.setAttribute("id", i * 3 + j);
+      cell.index = row_count * 3 + cell_count;
       cell.dataset.player = "0";
       row.appendChild(cell);
    }
@@ -54,15 +56,15 @@ start.addEventListener('click', () => {
    requestAnimationFrame(animation);
 });
 
-//不知道要取甚麼變數(cell)
-function click_func(cell) {
-   if(cell.target.className != "cell"){
+function click_func(classList) {
+   if(classList.target.className != "cell"){
       return;
    }
 
-   cell.target.dataset.player = player.name
+   cancelAnimationFrame(requestID);
+   classList.target.dataset.player = player.name
    currentstep++;
-   player.iswin |= (1 << cell.target.id);
+   player.iswin |= (1 << classList.target.index);
 
    if(check() == true){
       endgame();
@@ -71,8 +73,9 @@ function click_func(cell) {
    }
    
    player = (player.name == 'O') ? player_X : player_O;
-   rootElement.style.setProperty(`--celltext`, `"${player.name}"`);
    player.time_pre = Date.now();
+   requestAnimationFrame(animation);
+   rootElement.style.setProperty(`--celltext`, `"${player.name}"`);
 }
 
 function animation() {
@@ -85,10 +88,12 @@ function animation() {
       return;
    }
    
-   player.time = player.time - (now - player.time_pre);
-   player.time = player.time <= 0 ? 0 : player.time;
-   player.time_id.innerText = String((player.time / 1000).toFixed(1));
-   player.time_pre = now;
+   if((now - player.time_pre) >= 100){
+      player.time = player.time - (now - player.time_pre);
+      player.time = Math.max(player.time, 0);
+      player.time_id.textContent = (player.time / 1000).toFixed(1);
+      player.time_pre = now;
+   }
 
    requestID = requestAnimationFrame(animation);
 }
@@ -98,11 +103,12 @@ reset.addEventListener('click', () => {
    endgame();
    settext(false);
 
-   rootElement.style.setProperty(`--celltext`, `""`);
+   rootElement.style.removeProperty(`--celltext`)
 
-   for(let element of document.getElementsByClassName('cell')){
-      element.dataset.player = '0';
-   }
+   for(const row of table.childNodes)
+      for(const cell of row.childNodes)
+         cell.dataset.player = '0';
+
 });
 
 //data reset
@@ -130,11 +136,11 @@ function check() {
 }
 
 function settext(compare) {
-   start.disabled = compare ? "disabled" : "";
-   reset.disabled = compare ? "" : "disabled";
+   start.disabled = compare;
+   reset.disabled = !compare;
 
-   player_X.time_id.innerText = '60.0';
-   player_O.time_id.innerText = '60.0';
+   player_X.time_id.textContent = '60.0';
+   player_O.time_id.textContent = '60.0';
 
    player = player_O;
 
