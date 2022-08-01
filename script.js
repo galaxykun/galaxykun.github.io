@@ -30,19 +30,24 @@ let player_X = {
 let player     = player_O;
 let win_array  = [7, 73, 273, 146, 84, 292, 56, 448];
 
-for(let row_count = 0; row_count < ROW_NUM; row_count++){
-   let row = document.createElement("div");
+let cell_count = 0;
+const rows = Array.from({ length: ROW_NUM }, () => {
+   const row = document.createElement("div");
    row.className = "row";
-   table.appendChild(row);
 
-   for(let cell_count = 0; cell_count < CELL_NUM; cell_count++){
-      let cell = document.createElement("div");
+   return row;
+});
+for (const row of rows) {
+   row.append(...Array.from({ length: CELL_NUM }, () => {
+      const cell = document.createElement("div");
       cell.className = "cell";
-      cell.index = row_count * 3 + cell_count;
+      cell.index = cell_count++;
       cell.dataset.player = "0";
-      row.appendChild(cell);
-   }
+
+      return cell;
+   }));
 }
+table.append(...rows);
 
 //game start initiaize and event listerner
 start.addEventListener('click', () => {
